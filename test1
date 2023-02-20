@@ -1,0 +1,80 @@
+class CuratedPosterPresenter(featuredItemUIConfig: CollectionUI?) : BasePosterPresenter() {
+    var aspectRatio = featuredItemUIConfig?.let {
+        it.bigScreenStyle?.collectionThumbnailsSize ?: defaultAspectRatio
+    } ?: defaultAspectRatio
+
+    override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
+        val cardView = ContentListPosterImageCardView(parent.context)
+        initializePresenter(cardView)
+        return ViewHolder(cardView).apply {
+            applyDynamicSizingLayout(aspectRatio)
+        }
+    }
+
+    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
+        val collection = item as ViewableInterface.Edge
+        val viewable = collection.node as ViewableInterface
+
+        val cardView = viewHolder.view as ContentListPosterImageCardView
+        cardView.progressBar.setVisible(false)
+
+        viewable.apply {
+            cardView.lockView.setVisible(!isEntitled())
+            if (strictPosterImage.isNullOrEmpty()) {
+                cardView.imageView.setBackgroundColor(cardView.context.partnerTheme.secondaryTint3)
+            } else {
+                cardView.imageView.loadImageWithAspectRatio(strictPosterImage, R.dimen.tv_content_list_move_card_view_width, R.dimen.tv_content_list_move_card_view_height, aspectRatio = aspectRatio)
+            }
+        }
+
+        when (viewable) {
+            is ViewableInterface.VideoViewable -> {
+                viewable.apply {
+                    handleChanelLogoVisibility(cardView.channelLogo) { imageUrl: String? ->
+                        cardView.channelLogo.loadImageWithAspectRatio(
+                            imageUrl,
+                            R.dimen.content_list_channel_logo_small_size,
+                            R.dimen.content_list_channel_logo_small_size,
+                            aspectRatio = aspectRatio
+                        )
+                    }
+                    cardView.availabilityTv.bindOrHide(defaultPlayable?.localizedUpcomingAvailability(cardView.context))
+
+                    getWatchedPercentage()?.let {
+                        cardView.progressBar.setVisible(it > 0)
+                        cardView.progressBar.progress = it
+                    }
+
+                    renderLiveEvent(cardView.liveEventIcon, cardView.airTimeContainer, defaultPlayable, cardView.liveEventProgressContainer)
+                }
+            }
+            is ViewableInterface.Channel -> {
+                renderLiveEvent(cardView.liveEventIcon, cardView.airTimeContainer, viewable?.playable, cardView.liveEventProgressContainer)
+            }
+            else -> Log.e(this::class.java.simpleName, "this viewable is not supported")
+        }
+    }
+
+    private fun ViewHolder.applyDynamicSizingLayout(aspectRatio: Float) {
+        val cardView = this.view as ContentListPosterImageCardView
+        cardView.apply {
+            val cardWidth = (imageWidth * aspectRatio).toInt()
+            val cardHeight = (imageHeight * aspectRatio).toInt()
+            val layoutParams = LinearLayout.LayoutParams(cardWidth, cardHeight)
+            posterContainer.layoutParams = layoutParams
+            val parentParams = BaseCardView.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            posterRoot.layoutParams = parentParams
+            border.layoutParams = addBorder(cardWidth, cardHeight)
+
+            val channelLogoSize = (this.context.resources.getDimensionPixelSize(R.dimen.content_list_channel_logo_small_size) * aspectRatio).toInt()
+            val channelLogoMargin = (this.context.resources.getDimensionPixelSize(R.dimen.content_list_channel_logo_margin) * aspectRatio).toInt()
+            val channelLogoPadding = (this.context.resources.getDimensionPixelSize(R.dimen.content_list_channel_logo_padding) * aspectRatio).toInt()
+            val originalChannelLogoLayoutParams = FrameLayout.LayoutParams(channelLogoSize, channelLogoSize).apply {
+                gravity = Gravity.END or Gravity.BOTTOM
+                setMargins(channelLogoMargin, channelLogoMargin, channelLogoMargin, channelLogoMargin)
+                setPadding(channelLogoPadding, channelLogoPadding, channelLogoPadding, channelLogoPadding)
+            }
+            cardView.channelLogo.layoutParams = originalChannelLogoLayoutParams
+        }
+    }
+}
