@@ -1,3 +1,29 @@
+package com.magine.android.mamo.com.magine.android.mamo.contentlist.poster
+
+import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import androidx.leanback.widget.BaseCardView
+import com.magine.android.mamo.R
+import com.magine.android.mamo.api.model.ViewableInterface
+import com.magine.android.mamo.api.model.collectionUI.CollectionUI
+import com.magine.android.mamo.com.magine.android.mamo.common.liveEvent.LiveEventUtils.renderLiveEvent
+import com.magine.android.mamo.common.extensions.addBorder
+import com.magine.android.mamo.common.extensions.bindOrHide
+import com.magine.android.mamo.common.extensions.getWatchedPercentage
+import com.magine.android.mamo.common.extensions.handleChanelLogoVisibility
+import com.magine.android.mamo.common.extensions.isEntitled
+import com.magine.android.mamo.common.extensions.loadImageWithAspectRatio
+import com.magine.android.mamo.common.extensions.localizedUpcomingAvailability
+import com.magine.android.mamo.common.extensions.setVisible
+import com.magine.android.mamo.common.extensions.strictPosterImage
+import com.magine.android.mamo.common.util.partnerTheme
+import com.magine.android.mamo.contentlist.base.BasePosterPresenter
+import com.magine.android.mamo.contentlist.base.defaultAspectRatio
+import com.magine.android.mamo.contentlist.poster.ContentListPosterImageCardView
+
 class CuratedPosterPresenter(featuredItemUIConfig: CollectionUI?) : BasePosterPresenter() {
     var aspectRatio = featuredItemUIConfig?.let {
         it.bigScreenStyle?.collectionThumbnailsSize ?: defaultAspectRatio
